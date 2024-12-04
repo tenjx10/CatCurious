@@ -28,7 +28,7 @@ class Cat:
         if self.age < 0:
             raise ValueError("Age must be a positive value.")
         if self.weight <= 0:
-            raise ValueError("Age must be a positive value.")
+            raise ValueError("Weight must be a positive value.")
 
 
 def create_cat(name: str, breed: str, age: int, weight: int) -> None:
