@@ -147,4 +147,5 @@ def get_cat_info(cat_breed: str) -> str:
 
 def get_cat_affection(cat_breed: str) -> int:
     ## api call to get cat affection level by breed
+    
     return None
