@@ -1,18 +1,17 @@
 from dotenv import load_dotenv
 from flask import Flask, jsonify, make_response, Response, request
 
-from cat_curious.models import cat_model
+from cat_curious.models import Cat
 from cat_curious.utils.sql_utils import check_database_connection, check_table_exists
 from cat_curious.utils.cat_affection_utils import get_affection_level
 from cat_curious.utils.cat_facts_utils import get_random_cat_facts
-from cat_curious.utils.cat_pic_utils import get_cat_pic 
+from cat_curious.utils.cat_info_utils import get_cat_pic 
 
 # Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
-
-cat_model = CatModel()
+cat_model = Cat()
 
 ####################################################
 #
@@ -90,7 +89,7 @@ def add_cat() -> Response:
 
         # Add the cat to the database
         app.logger.info("Adding cat: %s (%s, Age: %d, Weight: %d)", name, breed, age, weight)
-        create_model.create_cat(name=name, breed=breed, age=age, weight=weight)
+        cat_model.create_cat(name=name, breed=breed, age=age, weight=weight)
         app.logger.info("Cat added to the database: %s", name)
         return make_response(jsonify({'status': 'success', 'cat': name}), 201)
     except Exception as e:
