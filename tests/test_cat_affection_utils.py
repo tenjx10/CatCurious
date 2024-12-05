@@ -2,7 +2,7 @@ import pytest
 import requests
 
 import os
-from dotenv import load_dotenv
+
 
 from cat_curious.utils.cat_affection_utils import get_affection_level
 
