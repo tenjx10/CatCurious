@@ -1,11 +1,14 @@
+
 from dataclasses import dataclass
 import logging
 import os
 import sqlite3
 from typing import Any
 
-from petfinder.utils.sql_utils import get_db_connection
-from petfinder.utils.logger import configure_logger
+from cat_curious.utils.sql_utils import get_db_connection
+from cat_curious.utils.logger import configure_logger
+from cat_curious.utils.cat_affection_utils import get_affection_level
+from cat_curious.utils.cat_info_utils import get_cat_info
 
 
 logger = logging.getLogger(__name__)
@@ -142,9 +145,61 @@ def get_cat_by_name(cat_name: str) -> Cat:
         raise e
 
 def get_cat_info(cat_breed: str) -> str:
-    ## api call to get cat info by breed
-    return None
+    """
+    Fetches the description of a cat based on breed using an external API.
+    
+    Args:
+        cat_breed (str): The breed of the cat.
+    
+    Returns:
+        str: description of breed
+    
+    Raises:
+        ValueError: If the breed is invalid or the description could not be retrieved.
+    """
+    try:
+        if cat_breed not in ['abys', 'beng', 'chau', 'drex', 'emau', 'hbro', 'java', 'khao', 'lape', 'mala']:
+            raise ValueError(f"Invalid breed: {cat_breed}.")
+        
+        cat_info = get_cat_info(cat_breed)
+        
+        if not isinstance(cat_info, str):
+            raise ValueError(f"Description for breed '{cat_breed}' could not be retrieved.")
+        
+        logger.info("Fetched description for breed %s: %d", cat_breed, cat_info)
+        return cat_info
+    
+    except Exception as e:
+        logger.error("Error fetching description for breed %s: %s", cat_breed, str(e))
+        raise
+    
 
 def get_cat_affection(cat_breed: str) -> int:
-    ## api call to get cat affection level by breed
-    return None
+    """
+    Fetches the affection level of a cat based on breed using an external API.
+    
+    Args:
+        cat_breed (str): The breed of the cat.
+    
+    Returns:
+        int: Affection level of the specified breed.
+    
+    Raises:
+        ValueError: If the breed is invalid or affection level could not be retrieved.
+    """
+    try:
+        if cat_breed not in ['abys', 'beng', 'chau', 'drex', 'emau', 'hbro', 'java', 'khao', 'lape', 'mala']:
+            raise ValueError(f"Invalid breed: {cat_breed}.")
+        
+        affection_level = get_affection_level(cat_breed)
+        
+        if not isinstance(affection_level, int):
+            raise ValueError(f"Affection level for breed '{cat_breed}' could not be retrieved.")
+        
+        logger.info("Fetched affection level for breed %s: %d", cat_breed, affection_level)
+        return affection_level
+    
+    except Exception as e:
+        logger.error("Error fetching affection level for breed %s: %s", cat_breed, str(e))
+        raise
+
