@@ -1,12 +1,13 @@
 import logging
 import requests
+import os
 
 from cat_curious.utils.logger import configure_logger
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
 
-def get_cat_info(breed: str) -> str:
+def cat_info(breed: str) -> str:
     """
     Fetches the description of a cat breed using TheCatAPI.
     
@@ -19,7 +20,7 @@ def get_cat_info(breed: str) -> str:
     Raises:
         RuntimeError: If the request fails or data is missing.
     """
-    url = f"https://api.thecatapi.com/v1/images/search?limit=1&breed_ids={breed}&api_key={KEY}"
+    url = f"https://api.thecatapi.com/v1/images/search?limit=1&breed_ids={breed}&api_key={os.getenv('KEY')}"
     try:
         logger.info("Fetching cat description from %s", url)
 
