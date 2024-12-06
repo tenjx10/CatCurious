@@ -7,7 +7,7 @@ from cat_curious.utils.logger import configure_logger
 logger = logging.getLogger(__name__)
 configure_logger(logger)
 
-def get_cat_info(breed: str) -> str:
+def cat_info(breed: str) -> str:
     """
     Fetches the description of a cat breed using TheCatAPI.
     

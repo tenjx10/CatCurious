@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 import logging
 import os
@@ -8,7 +7,7 @@ from typing import Any
 from cat_curious.utils.sql_utils import get_db_connection
 from cat_curious.utils.logger import configure_logger
 from cat_curious.utils.cat_affection_utils import get_affection_level
-from cat_curious.utils.cat_info_utils import get_cat_info
+from cat_curious.utils.cat_info_utils import cat_info
 
 
 logger = logging.getLogger(__name__)
@@ -23,8 +22,6 @@ class Cat:
     age: int
     weight: int
 
-
-
     def __post_init__(self):
         if self.breed not in ['abys', 'beng', 'chau','drex','emau','hbro','java','khao','lape','mala']:
             raise ValueError("not a valid breed")
@@ -35,6 +32,19 @@ class Cat:
 
 
 def create_cat(name: str, breed: str, age: int, weight: int) -> None:
+    """
+    Adds a new cat to the database.
+
+    Args:
+        name (str): Name of the cat.
+        breed (str): Breed of the cat.
+        age (int): Age of the cat in years.
+        weight (int): Weight of the cat in kilograms.
+
+    Raises:
+        ValueError: If the breed, age, or weight is invalid or already exists in the database.
+        sqlite3.Error: If a database error occurs.
+    """
     if breed not in ['abys', 'beng', 'chau','drex','emau','hbro','java','khao','lape','mala']:
         raise ValueError(f"Invalid breed : {breed}.")
     if not isinstance(age, (int, float)) or age < 0:
@@ -81,7 +91,17 @@ def clear_cats() -> None:
         logger.error("Database error while clearing cats: %s", str(e))
         raise e
 
-def delete_cat (cat_id: int) -> None:
+def delete_cat(cat_id: int) -> None:
+    """
+    Marks a cat as deleted in the database.
+
+    Args:
+        cat_id (int): The unique ID of the cat to delete.
+
+    Raises:
+        ValueError: If the cat has already been deleted or doesn't exist.
+        sqlite3.Error: If a database error occurs.
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -105,6 +125,19 @@ def delete_cat (cat_id: int) -> None:
         raise e
 
 def get_cat_by_id(cat_id: int) -> Cat:
+    """
+    Fetches a cat by its unique ID from the database.
+
+    Args:
+        cat_id (int): The unique ID of the cat.
+
+    Returns:
+        Cat: The cat object with the specified ID.
+
+    Raises:
+        ValueError: If the cat doesn't exist or has been deleted.
+        sqlite3.Error: If a database error occurs.
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -125,6 +158,19 @@ def get_cat_by_id(cat_id: int) -> Cat:
         raise e
 
 def get_cat_by_name(cat_name: str) -> Cat:
+    """
+    Fetches a cat by its name from the database.
+
+    Args:
+        cat_name (str): The name of the cat.
+
+    Returns:
+        Cat: The cat object with the specified name.
+
+    Raises:
+        ValueError: If the cat doesn't exist or has been deleted.
+        sqlite3.Error: If a database error occurs.
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -161,13 +207,13 @@ def get_cat_info(cat_breed: str) -> str:
         if cat_breed not in ['abys', 'beng', 'chau', 'drex', 'emau', 'hbro', 'java', 'khao', 'lape', 'mala']:
             raise ValueError(f"Invalid breed: {cat_breed}.")
         
-        cat_info = get_cat_info(cat_breed)
+        info = cat_info(cat_breed)
         
-        if not isinstance(cat_info, str):
+        if not isinstance(info, str):
             raise ValueError(f"Description for breed '{cat_breed}' could not be retrieved.")
         
-        logger.info("Fetched description for breed %s: %d", cat_breed, cat_info)
-        return cat_info
+        logger.info("Fetched description for breed %s: %s", cat_breed, info)
+        return info
     
     except Exception as e:
         logger.error("Error fetching description for breed %s: %s", cat_breed, str(e))
@@ -202,4 +248,3 @@ def get_cat_affection(cat_breed: str) -> int:
     except Exception as e:
         logger.error("Error fetching affection level for breed %s: %s", cat_breed, str(e))
         raise
-
