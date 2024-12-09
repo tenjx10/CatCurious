@@ -9,6 +9,18 @@ logger = logging.getLogger(__name__)
 configure_logger(logger)
 
 def get_affection_level(breed: str) -> int:
+    """
+    Retrieves the affection level for a specified cat breed using TheCatAPI.
+
+    Args:
+        breed (str): The breed identifier for which to fetch the affection level.
+
+    Returns:
+        int: The affection level of the specified breed, as provided by TheCatAPI.
+
+    Raises:
+        RuntimeError: If no breed information is returned by the API or if there is an error in the request.
+    """
     url = f"https://api.thecatapi.com/v1/images/search?limit=1&breed_ids={breed}&api_key={os.getenv('KEY')}"
     try:
         logger.info("Fetching breed information from %s", url)
