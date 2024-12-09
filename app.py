@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, make_response, Response, request
 from werkzeug.exceptions import BadRequest, Unauthorized
 
-from .config import ProductionConfig
+from config import ProductionConfig
 from cat_curious.db import *
 from cat_curious.models.user_model import Users
 
