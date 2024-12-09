@@ -424,6 +424,77 @@ def create_app(config_class=ProductionConfig):
             app.logger.error(f"Error retrieving cat picture: {e}")
             return make_response(jsonify({'error': str(e)}), 500)
 
+    @app.route('/api/get-cat-lifespan/<string:breed>', methods=['GET'])
+    def get_cat_lifespan(breed: str) -> Response:
+        """
+        Route to fetch the lifespan of a cat breed using TheCatAPI.
+
+        Path Parameter:
+            - breed (str): The cat breed to get lifespan for.
+
+        Returns:
+            JSON response indicating the lifespan or error message.
+        """
+        try:
+            app.logger.info(f"Fetching lifespan for breed: {breed}")
+            url = f"https://api.thecatapi.com/v1/breeds?breed_ids={breed}&api_key={KEY}"
+            response = request.get(url, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+
+            if data:
+                lifespan = data[0].get("life_span")
+                app.logger.info(f"Received lifespan: {lifespan}")
+                return make_response(jsonify({'status': 'success', 'breed': breed, 'lifespan': lifespan}), 200)
+            else:
+                app.logger.error("No breed information received from API.")
+                return make_response(jsonify({'error': 'No breed information received from API.'}), 500)
+
+        except request.exceptions.Timeout:
+            app.logger.error("Request to TheCatAPI timed out.")
+            return make_response(jsonify({'error': 'Request to TheCatAPI timed out.'}), 504)
+        except request.exceptions.RequestException as e:
+            app.logger.error(f"Request to TheCatAPI failed: {e}")
+            return make_response(jsonify({'error': f'Request failed: {e}'}), 502)
+        except Exception as e:
+            app.logger.error(f"Error retrieving lifespan for breed {breed}: {e}")
+            return make_response(jsonify({'error': str(e)}), 500)
+
+    @app.route('/api/get-random-cat-image', methods=['GET'])
+    def get_random_cat_image() -> Response:
+        """
+        Route to fetch a random cat image from TheCatAPI.
+
+        Returns:
+            JSON response with the URL of the random cat image or an error message.
+        """
+        url = "https://api.thecatapi.com/v1/images/search?limit=1&api_key={KEY}"
+        try:
+            app.logger.info(f"Fetching random cat image from {url}")
+            response = request.get(url, timeout=5)
+            response.raise_for_status()
+
+            data = response.json()
+            if data and "url" in data[0]:
+                cat_image_url = data[0]["url"]
+                app.logger.info(f"Fetched random cat image URL: {cat_image_url}")
+                return make_response(jsonify({'status': 'success', 'cat_image_url': cat_image_url}), 200)
+            else:
+                app.logger.error("Data received from TheCatAPI not received.")
+                return make_response(jsonify({'error': 'Data received from TheCatAPI not received.'}), 500)
+
+        except request.exceptions.Timeout:
+            app.logger.error("Request to TheCatAPI timed out.")
+            return make_response(jsonify({'error': 'Request to TheCatAPI timed out.'}), 504)
+
+        except request.exceptions.RequestException as e:
+            app.logger.error(f"Request to TheCatAPI failed: {e}")
+            return make_response(jsonify({'error': f'Request to TheCatAPI failed: {e}'}), 502)
+
+        except Exception as e:
+            app.logger.error(f"Error retrieving random cat image: {e}")
+            return make_response(jsonify({'error': str(e)}), 500)
+
     return app
 
 if __name__ == '__main__':
