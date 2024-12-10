@@ -30,7 +30,7 @@ def get_cat_lifespan(breed: str) -> int:
         data = response.json()
         if data and "breeds" in data[0] and data[0]["breeds"]:
             lifespan = data[0]["breeds"][0]["life_span"]
-            logger.info("Received lifespan: %d years", lifespan)
+            logger.info("Received lifespan: %s years", lifespan)
             return lifespan
         else:
             raise RuntimeError("No breed information received from API.")
