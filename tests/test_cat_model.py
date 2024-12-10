@@ -275,32 +275,22 @@ def test_get_cat_by_deleted_name(mock_cursor):
         get_cat_by_name("Mittens")
 
 def test_get_cat_info(mocker):
-    mock_info = mocker.patch("cat_curious.models.cat_model.cat_info", return_value= "example info")
+    """Test fetching cat information using get_cat_info()."""
 
-    # Call the function and check the result
+    # Mock the external API call to cat_info()
+    mock_info = mocker.patch(
+        "cat_curious.models.cat_model.cat_info", return_value="example info"
+    )
+
+    # Call the function being tested
     result = get_cat_info("drex")
 
-    # Expected result based on the simulated fetchone return value
+    # Expected result based on the mock return value
     expected_result = "example info"
 
-    # Ensure the result matches the expected output
+    # Assertions
     assert result == expected_result, f"Expected {expected_result}, got {result}"
     mock_info.assert_called_once_with("drex")
-
-    # Ensure the SQL query was executed correctly
-    expected_query = normalize_whitespace("Fetched description example info for breed drex")
-    actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
-
-    # Assert that the SQL query was correct
-    assert actual_query == expected_query, "The SQL query did not match the expected structure."
-
-    # Extract the arguments used in the SQL call
-    actual_arguments = mock_cursor.execute.call_args[0][1]
-
-    # Assert that the SQL query was executed with the correct arguments
-    expected_arguments = ("drex")
-    assert actual_arguments == expected_arguments, f"The SQL query arguments did not match. Expected {expected_arguments}, got {actual_arguments}."
-
 
 def test_get_cat_info_invalid_breed(mock_cursor):
     #finsih this
