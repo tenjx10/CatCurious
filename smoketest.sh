@@ -264,7 +264,6 @@ init_db() {
 
 # Run all the steps in order
 check_health
-db_check
 init_db
 create_account
 login
