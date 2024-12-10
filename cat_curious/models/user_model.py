@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import hashlib
 import logging
 import os
@@ -10,32 +11,33 @@ from cat_curious.utils.sql_utils import get_db_connection
 logger = logging.getLogger(__name__)
 configure_logger(logger)
 
-
-class Users():
-    id = int
-    username = str
-    salt = str
-    password = str
+@dataclass
+class Users:
+    id: int
+    username: str
+    salt: str
+    password: str
 
     def __post_init__(self):
         logger.info(f"User {self.username} initialized with a hashed password.")
 
-def generate_hashed_password(password: str) -> tuple[str, str]:
-    """
-    Generates a salted, hashed password.
+    @classmethod
+    def generate_hashed_password(cls, password: str) -> tuple[str, str]:
+        """
+        Generates a salted, hashed password.
 
-    Args:
-        password (str): The password to hash.
+        Args:
+            password (str): The password to hash.
 
-    Returns:
-        tuple: A tuple containing the salt and hashed password.
-    """
-    salt = os.urandom(16).hex()
-    hashed_password = hashlib.sha256((password + salt).encode()).hexdigest()
-    return salt, hashed_password
-    
-  
-def create_user(cls, username: str, password: str) -> None:
+        Returns:
+            tuple: A tuple containing the salt and hashed password.
+        """
+        salt = os.urandom(16).hex()
+        hashed_password = hashlib.sha256((password + salt).encode()).hexdigest()
+        return salt, hashed_password
+
+    @classmethod
+    def create_user(cls, username: str, password: str) -> None:
         """
         Create a new user with a salted, hashed password.
 
@@ -46,7 +48,7 @@ def create_user(cls, username: str, password: str) -> None:
         Raises:
             ValueError: If a user with the username already exists.
         """
-        salt, hashed_password = cls._generate_hashed_password(password)
+        salt, hashed_password = cls.generate_hashed_password(password)
         try:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
@@ -63,8 +65,8 @@ def create_user(cls, username: str, password: str) -> None:
             logger.error("Database error: %s", str(e))
             raise
 
-
-def check_password(cls, username: str, password: str) -> bool:
+    @classmethod
+    def check_password(cls, username: str, password: str) -> bool:
         """
         Check if a given password matches the stored password for a user.
 
@@ -78,15 +80,15 @@ def check_password(cls, username: str, password: str) -> bool:
         Raises:
             ValueError: If the user does not exist.
         """
-        user = cls.query.filter_by(username=username).first()
+        user = cls.query.filter_by(username=username).first()  # Assuming ORM-like query
         if not user:
             logger.info("User %s not found", username)
             raise ValueError(f"User {username} not found")
         hashed_password = hashlib.sha256((password + user.salt).encode()).hexdigest()
         return hashed_password == user.password
 
-
-def delete_user(cls, username: str) -> None:
+    @classmethod
+    def delete_user(cls, username: str) -> None:
         """
         Delete a user from the database.
 
@@ -109,8 +111,8 @@ def delete_user(cls, username: str) -> None:
             logger.error("Database error: %s", str(e))
             raise
 
-
-def get_id_by_username(cls, username: str) -> int:
+    @classmethod
+    def get_id_by_username(cls, username: str) -> int:
         """
         Retrieve the ID of a user by username.
 
@@ -123,14 +125,14 @@ def get_id_by_username(cls, username: str) -> int:
         Raises:
             ValueError: If the user does not exist.
         """
-        user = cls.query.filter_by(username=username).first()
+        user = cls.query.filter_by(username=username).first()  # Assuming ORM-like query
         if not user:
             logger.info("User %s not found", username)
             raise ValueError(f"User {username} not found")
         return user.id
 
-
-def update_password(cls, username: str, new_password: str) -> None:
+    @classmethod
+    def update_password(cls, username: str, new_password: str) -> None:
         """
         Update the password for a user.
 
@@ -141,7 +143,7 @@ def update_password(cls, username: str, new_password: str) -> None:
         Raises:
             ValueError: If the user does not exist.
         """
-        salt, hashed_password = cls._generate_hashed_password(new_password)
+        salt, hashed_password = cls.generate_hashed_password(new_password)
         try:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
