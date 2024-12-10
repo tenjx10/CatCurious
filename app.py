@@ -300,10 +300,37 @@ def create_app(config_class=ProductionConfig):
         except Exception as e:
             app.logger.error(f"Error retrieving cat by name: {e}")
             return make_response(jsonify({'error': str(e)}), 500)
+    
+    @app.route('/api/init-db', methods=['POST'])
+    def init_db():
+        """
+        Initialize or recreate database tables.
+
+        This route initializes the database tables defined in the SQLAlchemy models.
+        If the tables already exist, they are dropped and recreated to ensure a clean
+        slate. Use this with caution as all existing data will be deleted.
+
+        Returns:
+            Response: A JSON response indicating the success or failure of the operation.
+
+        Logs:
+            Logs the status of the database initialization process.
+        """
+        try:
+            with app.app_context():
+                app.logger.info("Dropping all existing tables.")
+                db.drop_all()  # Drop all existing tables
+                app.logger.info("Creating all tables from models.")
+                db.create_all()  # Recreate all tables
+            app.logger.info("Database initialized successfully.")
+            return jsonify({"status": "success", "message": "Database initialized successfully."}), 200
+        except Exception as e:
+            app.logger.error("Failed to initialize database: %s", str(e))
+            return jsonify({"status": "error", "message": "Failed to initialize database."}), 500
 
     ####################################################
     #
-    # Cat Information. routes on exist for functions already implemented!
+    # Cat Information
     #
     ####################################################
 
