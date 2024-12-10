@@ -273,8 +273,6 @@ init_db() {
 check_health
 init_db
 create_account
-login
-update_password
 create_cat
 get_cat_by_id
 get_cat_by_name
@@ -284,6 +282,8 @@ get_affection_level
 get_cat_facts
 get_random_cat_image
 get_cat_lifespan
+update_password
+login
 
 echo "All API tests passed successfully!"
 

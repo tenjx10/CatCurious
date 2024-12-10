@@ -4,6 +4,5 @@ CREATE TABLE users (
     username TEXT NOT NULL UNIQUE,
     salt TEXT NOT NULL,
     password TEXT NOT NULL,
-    deleted BOOLEAN DEFAULT FALSE,
-    UNIQUE(artist, title, year)
+    deleted BOOLEAN DEFAULT FALSE
 );
