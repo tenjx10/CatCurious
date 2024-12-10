@@ -25,7 +25,7 @@ def create_app(config_class=ProductionConfig):
     with app.app_context():
         db.create_all()  # Recreate all tables
 
-    cat_model = Cat()
+    cat_model = Cat(id=-1, name="Whiskers", breed="beng", age=3, weight=8)
 
     ####################################################
     #
