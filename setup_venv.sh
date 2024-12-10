@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the name of the virtual environment directory
-VENV_DIR="petfinder_venv"
+VENV_DIR="cat_curious_venv"
 REQUIREMENTS_FILE="requirements.lock"
 
 # Check if the virtual environment already exists

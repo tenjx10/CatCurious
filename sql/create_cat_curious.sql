@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS pets;
 CREATE TABLE pets (
     """
     this is the template used in meal_max, we can to figure out the 
-    parameters of petfinder, then we can create the the db table
+    parameters of cat_curious, then we can create the the db table
     """
 
 
