@@ -17,6 +17,7 @@ def sample_user():
     }
 
 
+
 def normalize_whitespace(sql_query: str) -> str:
     return re.sub(r'\s+', ' ', sql_query).strip()
 
