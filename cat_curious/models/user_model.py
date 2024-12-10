@@ -178,3 +178,4 @@ class Users:
         except sqlite3.Error as e:
             logger.error("Database error: %s", str(e))
             raise
+
