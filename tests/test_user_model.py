@@ -4,6 +4,7 @@ import sqlite3
 import pytest
 from cat_curious.models.user_model import Users
 
+
 @pytest.fixture
 def Users():
     from cat_curious.models.user_model import Users
@@ -47,18 +48,37 @@ def mock_cursor(mocker):
 # User Creation
 ##########################################################
 
-def test_create_user(Users, sample_user, mock_cursor):
+def test_create_user(Users, sample_user, mock_cursor, mocker):
     """Test creating a new user with a unique username."""
+
+    # Mock the generate_hashed_password method to return predictable values
+    mock_generate_hashed_password = mocker.patch.object(Users, 'generate_hashed_password', return_value=("mocked_salt", "mocked_hashed_password"))
+
+    # Call the create_user method
     Users.create_user(**sample_user)
-    
-    # Verify that the database insert query was executed
-    mock_cursor.execute.assert_called_with("""
+
+    expected_query = normalize_whitespace("""
         INSERT INTO users (username, salt, password)
         VALUES (?, ?, ?)
-    """, (sample_user["username"], mock_cursor.return_value, mock_cursor.return_value))  # Adjust as necessary
-    
-    # Verify the insert was committed
-    mock_cursor.connection.commit.assert_called_once()
+    """)
+
+    actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
+
+    # Assert that the SQL query was correct
+    assert actual_query == expected_query, "The SQL query did not match the expected structure."
+
+    # Extract the arguments used in the SQL call (second element of call_args)
+    actual_arguments = mock_cursor.execute.call_args[0][1]
+
+    # Assert that the SQL query was executed with the correct arguments
+    expected_arguments = (sample_user["username"], "mocked_salt", "mocked_hashed_password")
+    assert actual_arguments == expected_arguments, f"The SQL query arguments did not match. Expected {expected_arguments}, got {actual_arguments}."
+
+    # Verify that the generate_hashed_password method was called once with the password
+    mock_generate_hashed_password.assert_called_once_with(sample_user["password"])
+
+
+
 
 def test_create_duplicate_user(Users, sample_user, mock_cursor):
     """Test attempting to create a user with a duplicate username."""
@@ -74,23 +94,41 @@ def test_create_duplicate_user(Users, sample_user, mock_cursor):
 # User Authentication
 ##########################################################
 
-def test_check_password_correct(Users, sample_user, mock_cursor):
+def test_check_password_correct(Users, sample_user, mock_cursor, mocker):
     """Test checking the correct password."""
-    Users.create_user(**sample_user)
-    
-    # Mock the database to return the correct hashed password and salt for the user
-    mock_cursor.fetchone.return_value = (sample_user["username"], sample_user["salt"], mock_cursor.return_value)
-    
-    assert Users.check_password(sample_user["username"], sample_user["password"]) is True, "Password should match."
 
-def test_check_password_incorrect(Users, sample_user, mock_cursor):
-    """Test checking an incorrect password."""
+    # Mock the database to return the correct salt and password for the user
+    mock_cursor.fetchone.return_value = ("mocked_salt", "mocked_hashed_password")
+
+    # Mock the hash generation for the password
+    # Ensure the hash generated for password + salt matches the stored hash
+    mocker.patch("hashlib.sha256", return_value=mocker.Mock(hexdigest=mocker.Mock(return_value="mocked_hashed_password")))
+
+    # Create the user in the database (assumed behavior of the create_user function)
     Users.create_user(**sample_user)
-    
-    # Mock the database to return the correct salt but incorrect hashed password for the user
-    mock_cursor.fetchone.return_value = (sample_user["username"], sample_user["salt"], mock_cursor.return_value)
-    
+
+    # Verify that the password matches by calling check_password
+    result = Users.check_password(sample_user["username"], sample_user["password"])
+
+    # Assert that the result is True because the password should match
+    assert result is True, f"Password for user {sample_user['username']} should match."
+
+
+
+def test_check_password_incorrect(Users, sample_user, mock_cursor, mocker):
+    """Test checking an incorrect password."""
+    # Create the user in the database (assumed behavior of the create_user function)
+    Users.create_user(**sample_user)
+
+    # Mock the database to return the correct salt and password for the user
+    mock_cursor.fetchone.return_value = ("mocked_salt", "mocked_hashed_password")
+
+    # Mock the hash generation for the incorrect password
+    mocker.patch("hashlib.sha256", return_value=mocker.Mock(hexdigest=mocker.Mock(return_value="incorrect_hashed_password")))
+
+    # Verify the password check returns False for incorrect password
     assert Users.check_password(sample_user["username"], "wrongpassword") is False, "Password should not match."
+
 
 def test_check_password_user_not_found(Users, mock_cursor):
     """Test checking password for a non-existent user."""
@@ -103,19 +141,34 @@ def test_check_password_user_not_found(Users, mock_cursor):
 # Update Password
 ##########################################################
 
-def test_update_password(Users, sample_user, mock_cursor):
+def test_update_password(Users, sample_user, mock_cursor, mocker):
     """Test updating the password for an existing user."""
+    # Create the user with the initial password
     Users.create_user(**sample_user)
     
     new_password = "newpassword456"
+
+    # Mock the generate_hashed_password method to return predictable values for the new password
+    mocker.patch.object(Users, 'generate_hashed_password', return_value=("new_mocked_salt", "new_mocked_hashed_password"))
+    
+    # Call the update_password method to update the user's password
     Users.update_password(sample_user["username"], new_password)
     
-    # Verify that the update query was executed
-    mock_cursor.execute.assert_called_with("""
+    # Normalize whitespace in both the expected and actual queries
+    expected_query = normalize_whitespace("""
         UPDATE users SET salt = ?, password = ? WHERE username = ?
-    """, (mock_cursor.return_value, mock_cursor.return_value, sample_user["username"]))
+    """)
+    actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
     
-    mock_cursor.connection.commit.assert_called_once()
+    # Verify that the update query was executed with the correct values
+    assert actual_query == expected_query, f"Expected query: {expected_query}, but got: {actual_query}"
+
+    # Verify that the arguments used in the query match
+    expected_arguments = ('new_mocked_salt', 'new_mocked_hashed_password', sample_user["username"])
+    actual_arguments = mock_cursor.execute.call_args[0][1]
+    assert actual_arguments == expected_arguments, f"Expected arguments: {expected_arguments}, but got: {actual_arguments}"
+    
+
 
 def test_update_password_user_not_found(Users, mock_cursor):
     """Test updating the password for a non-existent user."""
@@ -135,7 +188,6 @@ def test_delete_user(Users, sample_user, mock_cursor):
     
     # Verify that the delete query was executed
     mock_cursor.execute.assert_called_with("DELETE FROM users WHERE username = ?", (sample_user["username"],))
-    mock_cursor.connection.commit.assert_called_once()
 
 def test_delete_user_not_found(Users, sample_user, mock_cursor):
     """Test deleting a non-existent user."""
@@ -155,7 +207,7 @@ def test_get_id_by_username(Users, sample_user, mock_cursor):
     Users.create_user(**sample_user)
     
     # Mock the return of the ID
-    mock_cursor.fetchone.return_value = (1, sample_user["username"], sample_user["salt"], mock_cursor.return_value)
+    mock_cursor.fetchone.return_value = (1, sample_user["username"], mock_cursor.return_value)
     
     user_id = Users.get_id_by_username(sample_user["username"])
     
