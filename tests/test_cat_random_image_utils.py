@@ -2,7 +2,7 @@ import pytest
 import requests
 import os
 
-from cat_curious.utils.cat_image_utils import get_random_cat_image
+from cat_curious.utils.cat_random_image_utils import get_random_cat_image
 
 MOCK_IMAGE_URL = "https://cdn2.thecatapi.com/images/12345.jpg"
 
