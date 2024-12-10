@@ -44,7 +44,7 @@ def test_get_random_cat_image_no_data(mock_cat_api_image):
     """Test API response with no image data."""
     mock_cat_api_image.json.return_value = []
 
-    with pytest.raises(RuntimeError, match="No image data received from TheCatAPI."):
+    with pytest.raises(RuntimeError, match="No cat image URL received from API."):
         get_random_cat_image()
 
 def test_get_random_cat_image_invalid_response(mock_cat_api_image):
