@@ -3,7 +3,7 @@ import logging
 import os
 import sqlite3
 
-from petfinder.utils.logger import configure_logger
+from cat_curious.utils.logger import configure_logger
 
 
 logger = logging.getLogger(__name__)

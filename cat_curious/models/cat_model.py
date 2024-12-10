@@ -4,8 +4,10 @@ import os
 import sqlite3
 from typing import Any
 
-from petfinder.utils.sql_utils import get_db_connection
-from petfinder.utils.logger import configure_logger
+from cat_curious.utils.sql_utils import get_db_connection
+from cat_curious.utils.logger import configure_logger
+from cat_curious.utils.cat_affection_utils import get_affection_level
+from cat_curious.utils.cat_info_utils import cat_info
 
 
 logger = logging.getLogger(__name__)
@@ -20,8 +22,6 @@ class Cat:
     age: int
     weight: int
 
-
-
     def __post_init__(self):
         if self.breed not in ['abys', 'beng', 'chau','drex','emau','hbro','java','khao','lape','mala']:
             raise ValueError("not a valid breed")
@@ -32,6 +32,19 @@ class Cat:
 
 
 def create_cat(name: str, breed: str, age: int, weight: int) -> None:
+    """
+    Adds a new cat to the database.
+
+    Args:
+        name (str): Name of the cat.
+        breed (str): Breed of the cat.
+        age (int): Age of the cat in years.
+        weight (int): Weight of the cat in kilograms.
+
+    Raises:
+        ValueError: If the breed, age, or weight is invalid or already exists in the database.
+        sqlite3.Error: If a database error occurs.
+    """
     if breed not in ['abys', 'beng', 'chau','drex','emau','hbro','java','khao','lape','mala']:
         raise ValueError(f"Invalid breed : {breed}.")
     if not isinstance(age, (int, float)) or age < 0:
@@ -78,7 +91,17 @@ def clear_cats() -> None:
         logger.error("Database error while clearing cats: %s", str(e))
         raise e
 
-def delete_cat (cat_id: int) -> None:
+def delete_cat(cat_id: int) -> None:
+    """
+    Marks a cat as deleted in the database.
+
+    Args:
+        cat_id (int): The unique ID of the cat to delete.
+
+    Raises:
+        ValueError: If the cat has already been deleted or doesn't exist.
+        sqlite3.Error: If a database error occurs.
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -102,6 +125,19 @@ def delete_cat (cat_id: int) -> None:
         raise e
 
 def get_cat_by_id(cat_id: int) -> Cat:
+    """
+    Fetches a cat by its unique ID from the database.
+
+    Args:
+        cat_id (int): The unique ID of the cat.
+
+    Returns:
+        Cat: The cat object with the specified ID.
+
+    Raises:
+        ValueError: If the cat doesn't exist or has been deleted.
+        sqlite3.Error: If a database error occurs.
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -122,6 +158,19 @@ def get_cat_by_id(cat_id: int) -> Cat:
         raise e
 
 def get_cat_by_name(cat_name: str) -> Cat:
+    """
+    Fetches a cat by its name from the database.
+
+    Args:
+        cat_name (str): The name of the cat.
+
+    Returns:
+        Cat: The cat object with the specified name.
+
+    Raises:
+        ValueError: If the cat doesn't exist or has been deleted.
+        sqlite3.Error: If a database error occurs.
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -142,11 +191,89 @@ def get_cat_by_name(cat_name: str) -> Cat:
         raise e
 
 def get_cat_info(cat_breed: str) -> str:
-    ## api call to get cat info by breed
-    return None
+    """
+    Fetches the description of a cat based on breed using an external API.
+    
+    Args:
+        cat_breed (str): The breed of the cat.
+    
+    Returns:
+        str: description of breed
+    
+    Raises:
+        ValueError: If the breed is invalid or the description could not be retrieved.
+    """
+    try:
+        if cat_breed not in ['abys', 'beng', 'chau', 'drex', 'emau', 'hbro', 'java', 'khao', 'lape', 'mala']:
+            raise ValueError(f"Invalid breed: {cat_breed}.")
+        
+        info = cat_info(cat_breed)
+        
+        if not isinstance(info, str):
+            raise ValueError(f"Description for breed '{cat_breed}' could not be retrieved.")
+        
+        logger.info("Fetched description for breed %s: %s", cat_breed, info)
+        return info
+    
+    except Exception as e:
+        logger.error("Error fetching description for breed %s: %s", cat_breed, str(e))
+        raise
+    
 
 def get_cat_affection(cat_breed: str) -> int:
-    ## api call to get cat affection level by breed
+    """
+    Fetches the affection level of a cat based on breed using an external API.
     
+    Args:
+        cat_breed (str): The breed of the cat.
     
-    return None
+    Returns:
+        int: Affection level of the specified breed.
+    
+    Raises:
+        ValueError: If the breed is invalid or affection level could not be retrieved.
+    """
+    try:
+        if cat_breed not in ['abys', 'beng', 'chau', 'drex', 'emau', 'hbro', 'java', 'khao', 'lape', 'mala']:
+            raise ValueError(f"Invalid breed: {cat_breed}.")
+        
+        affection_level = get_affection_level(cat_breed)
+        
+        if not isinstance(affection_level, int):
+            raise ValueError(f"Affection level for breed '{cat_breed}' could not be retrieved.")
+        
+        logger.info("Fetched affection level for breed %s: %d", cat_breed, affection_level)
+        return affection_level
+    
+    except Exception as e:
+        logger.error("Error fetching affection level for breed %s: %s", cat_breed, str(e))
+        raise
+
+def get_cat_lifespan(cat_breed: str) -> str:
+    """
+    Fetches the lifespan of a cat based on breed using an external API.
+
+    Args:
+        cat_breed (str): The breed of the cat.
+
+    Returns:
+        str: Lifespan of the specified breed.
+
+    Raises:
+        ValueError: If the breed is invalid or lifespan could not be retrieved.
+    """
+    try:
+        if cat_breed not in ['abys', 'beng', 'chau', 'drex', 'emau', 'hbro', 'java', 'khao', 'lape', 'mala']:
+            raise ValueError(f"Invalid breed: {cat_breed}.")
+
+        lifespan = cat_info(cat_breed, info_type="lifespan")
+
+        if not isinstance(lifespan, str):
+            raise ValueError(f"Lifespan for breed '{cat_breed}' could not be retrieved.")
+
+        logger.info("Fetched lifespan for breed %s: %s", cat_breed, lifespan)
+        return lifespan
+
+    except Exception as e:
+        logger.error("Error fetching lifespan for breed %s: %s", cat_breed, str(e))
+        raise
