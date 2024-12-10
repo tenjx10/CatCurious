@@ -248,3 +248,32 @@ def get_cat_affection(cat_breed: str) -> int:
     except Exception as e:
         logger.error("Error fetching affection level for breed %s: %s", cat_breed, str(e))
         raise
+
+def get_cat_lifespan(cat_breed: str) -> str:
+    """
+    Fetches the lifespan of a cat based on breed using an external API.
+
+    Args:
+        cat_breed (str): The breed of the cat.
+
+    Returns:
+        str: Lifespan of the specified breed.
+
+    Raises:
+        ValueError: If the breed is invalid or lifespan could not be retrieved.
+    """
+    try:
+        if cat_breed not in ['abys', 'beng', 'chau', 'drex', 'emau', 'hbro', 'java', 'khao', 'lape', 'mala']:
+            raise ValueError(f"Invalid breed: {cat_breed}.")
+
+        lifespan = cat_info(cat_breed, info_type="lifespan")
+
+        if not isinstance(lifespan, str):
+            raise ValueError(f"Lifespan for breed '{cat_breed}' could not be retrieved.")
+
+        logger.info("Fetched lifespan for breed %s: %s", cat_breed, lifespan)
+        return lifespan
+
+    except Exception as e:
+        logger.error("Error fetching lifespan for breed %s: %s", cat_breed, str(e))
+        raise

@@ -2,24 +2,23 @@ import logging
 import requests
 import os
 
-
 from cat_curious.utils.logger import configure_logger
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
 
-def get_affection_level(breed: str) -> int:
+def get_cat_lifespan(breed: str) -> int:
     """
-    Retrieves the affection level for a specified cat breed using TheCatAPI.
+    Fetch the estimated lifespan for a specific cat breed from TheCatAPI.
 
     Args:
-        breed (str): The breed identifier for which to fetch the affection level.
+        breed (str): The breed ID of the cat to get lifespan information for.
 
     Returns:
-        int: The affection level of the specified breed, as provided by TheCatAPI.
+        int: Estimated lifespan of the breed, or raises an error if data is not available.
 
     Raises:
-        RuntimeError: If no breed information is returned by the API or if there is an error in the request.
+        RuntimeError: If no breed information is received from the API or if there is an error with the API request.
     """
     url = f"https://api.thecatapi.com/v1/images/search?limit=1&breed_ids={breed}&api_key={os.getenv('KEY')}"
     try:
@@ -30,9 +29,9 @@ def get_affection_level(breed: str) -> int:
 
         data = response.json()
         if data and "breeds" in data[0] and data[0]["breeds"]:
-            affection_level = data[0]["breeds"][0]["affection_level"]
-            logger.info("Received affection level: %d", affection_level)
-            return affection_level
+            lifespan = data[0]["breeds"][0]["life_span"]
+            logger.info("Received lifespan: %d years", lifespan)
+            return lifespan
         else:
             raise RuntimeError("No breed information received from API.")
 
@@ -43,3 +42,7 @@ def get_affection_level(breed: str) -> int:
     except requests.exceptions.RequestException as e:
         logger.error("Request to TheCatAPI failed: %s", e)
         raise RuntimeError("Request to TheCatAPI failed: %s" % e)
+
+    except Exception as e:
+        logger.error("Error retrieving cat lifespan: %s", e)
+        raise RuntimeError(f"Error retrieving cat lifespan: {e}")

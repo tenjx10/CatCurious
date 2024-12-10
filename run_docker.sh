@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-IMAGE_NAME="petfinder"
+IMAGE_NAME="cat_curious"
 CONTAINER_TAG="0.2.0"
 HOST_PORT=5000
 CONTAINER_PORT=5000
