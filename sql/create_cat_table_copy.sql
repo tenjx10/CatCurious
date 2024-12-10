@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS cats;
+CREATE TABLE cats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    breed TEXT NOT NULL,
+    age INTEGER NOT NULL CHECK(age >= 0),
+    weight INTEGER NOT NULL CHECK(weight > 0),
+    deleted BOOLEAN DEFAULT FALSE
+);

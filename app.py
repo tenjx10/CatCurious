@@ -70,23 +70,23 @@ def create_app(config_class=ProductionConfig):
     # User management
     #
     ##########################################################
-
+    
     @app.route('/api/create-account', methods=['POST'])
     def create_account() -> Response:
         """
-        Route to create a new user account.
+        Route to create a new user.
 
         Expected JSON Input:
             - username (str): The username for the new user.
             - password (str): The password for the new user.
 
         Returns:
-            JSON response indicating the success of user account creation.
+            JSON response indicating the success of user creation.
         Raises:
             400 error if input validation fails.
-            500 error if there is an issue adding the user account to the database.
+            500 error if there is an issue adding the user to the database.
         """
-        app.logger.info('Creating new user account')
+        app.logger.info('Creating new user')
         try:
             # Get the JSON data from the request
             data = request.get_json()
@@ -98,15 +98,16 @@ def create_app(config_class=ProductionConfig):
             if not username or not password:
                 return make_response(jsonify({'error': 'Invalid input, both username and password are required'}), 400)
 
-            # Call the User function to add the user account to the database
-            app.logger.info('Adding user account: %s', username)
+            # Call the User function to add the user to the database
+            app.logger.info('Adding user: %s', username)
             Users.create_account(username, password)
 
-            app.logger.info("User account added: %s", username)
-            return make_response(jsonify({'status': 'user account added', 'username': username}), 201)
+            app.logger.info("User added: %s", username)
+            return make_response(jsonify({'status': 'user added', 'username': username}), 201)
         except Exception as e:
-            app.logger.error("Failed to add user account: %s", str(e))
+            app.logger.error("Failed to add user: %s", str(e))
             return make_response(jsonify({'error': str(e)}), 500)
+
 
     @app.route('/api/login', methods=['POST'])
     def login() -> Response:

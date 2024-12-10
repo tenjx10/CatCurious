@@ -37,7 +37,7 @@ class Users:
         return salt, hashed_password
 
     @classmethod
-    def create_user(cls, username: str, password: str) -> None:
+    def create_account(cls, username: str, password: str) -> None:
         """
         Create a new user with a salted, hashed password.
 

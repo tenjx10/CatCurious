@@ -40,15 +40,22 @@ check_health() {
 #
 ##############################################
 
-# Function to create a user
 create_account() {
   echo "Creating a new user..."
-  curl -s -X POST "$BASE_URL/create-account" -H "Content-Type: application/json" \
-    -d '{"username":"testuser", "password":"password123"}' | grep -q '"status": "user added"'
-  if [ $? -eq 0 ]; then
-    echo "Account created successfully."
+  response=$(curl -s -X POST "$BASE_URL/create-account" -H "Content-Type: application/json" \
+    -d '{"username":"testuser", "password":"password123"}')
+  if echo "$response" | grep -q '"status": "user added"'; then
+    echo "User created successfully."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Create User Response JSON:"
+      echo "$response" | jq .
+    fi
   else
     echo "Failed to create user."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Error Response JSON:"
+      echo "$response" | jq .
+    fi
     exit 1
   fi
 }
