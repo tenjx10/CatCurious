@@ -80,12 +80,22 @@ class Users:
         Raises:
             ValueError: If the user does not exist.
         """
-        user = cls.query.filter_by(username=username).first()  # Assuming ORM-like query
-        if not user:
-            logger.info("User %s not found", username)
-            raise ValueError(f"User {username} not found")
-        hashed_password = hashlib.sha256((password + user.salt).encode()).hexdigest()
-        return hashed_password == user.password
+        try:
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT salt, password FROM users WHERE username = ?", (username,))
+                user = cursor.fetchone()
+                
+                if not user:
+                    logger.info("User %s not found", username)
+                    raise ValueError(f"User {username} not found")
+                
+                salt, stored_password = user
+                hashed_password = hashlib.sha256((password + salt).encode()).hexdigest()
+                return hashed_password == stored_password
+        except sqlite3.Error as e:
+            logger.error("Database error: %s", str(e))
+            raise
 
     @classmethod
     def delete_user(cls, username: str) -> None:
@@ -125,11 +135,21 @@ class Users:
         Raises:
             ValueError: If the user does not exist.
         """
-        user = cls.query.filter_by(username=username).first()  # Assuming ORM-like query
-        if not user:
-            logger.info("User %s not found", username)
-            raise ValueError(f"User {username} not found")
-        return user.id
+        try:
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+                user = cursor.fetchone()
+                
+                if not user:
+                    logger.info("User %s not found", username)
+                    raise ValueError(f"User {username} not found")
+                
+                return user[0]  # Assuming the ID is in the first column
+        except sqlite3.Error as e:
+            logger.error("Database error: %s", str(e))
+            raise
+
 
     @classmethod
     def update_password(cls, username: str, new_password: str) -> None:
