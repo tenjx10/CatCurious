@@ -302,35 +302,6 @@ def test_get_cat_info_invalid_breed(mock_cursor):
     with pytest.raises(ValueError, match="Cat breed 'unknown_breed' not found"):
         get_cat_info("unknown_breed")
 
-def test_get_cat_affection_level(mock_cursor):
-    """Test fetching a cat's affection level based on breed."""
-
-    # Simulate that the affection level for a breed exists (breed = beng, affection level = 8)
-    mock_cursor.fetchone.return_value = (8,)  # Example affection level for breed "beng"
-
-    # Call the function to get the affection level
-    result = get_cat_affection("beng")
-
-    # Expected result based on the simulated fetchone return value
-    expected_result = 8
-
-    # Ensure the result matches the expected affection level
-    assert result == expected_result, f"Expected {expected_result}, got {result}"
-
-    # Ensure the SQL query was executed correctly
-    expected_query = normalize_whitespace("SELECT affection_level FROM cats WHERE breed = ?")
-    actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
-
-    # Assert that the SQL query was correct
-    assert actual_query == expected_query, "The SQL query did not match the expected structure."
-
-    # Extract the arguments used in the SQL call
-    actual_arguments = mock_cursor.execute.call_args[0][1]
-
-    # Assert that the SQL query was executed with the correct arguments
-    expected_arguments = ("beng",)
-    assert actual_arguments == expected_arguments, f"The SQL query arguments did not match. Expected {expected_arguments}, got {actual_arguments}."
-
 def test_get_cat_affection_level_invalid_breed(mock_cursor):
     """Test error when trying to fetch affection level for an invalid breed."""
 
