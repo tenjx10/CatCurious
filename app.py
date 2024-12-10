@@ -282,7 +282,7 @@ def create_app(config_class=ProductionConfig):
             app.logger.error(f"Error retrieving cat by ID: {e}")
             return make_response(jsonify({'error': str(e)}), 500)
 
-    @app.route('/api/get-cat-by-name/<str:cat_name>', methods=['GET'])
+    @app.route('/api/get-cat-by-name/<string:cat_name>', methods=['GET'])
     def get_cat_by_name(cat_name: str) -> Response:
         """
         Route to retrieve a cat by its name.
