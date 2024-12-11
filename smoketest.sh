@@ -84,9 +84,10 @@ login() {
 # Function to update a user's password
 update_password() {
   echo "Updating user password..."
-  response=$(curl -s -X PUT "$BASE_URL/api/update-password" -H "Content-Type: application/json" \
+  response=$(curl -s -X PUT "$BASE_URL/update-password" -H "Content-Type: application/json" \
     -d '{"username":"testuser", "old_password":"password123", "new_password":"newpassword456"}')
-  if echo "$response" | grep -q '"message": "Password updated successfully for user testuser."'; then
+
+  if echo "$response" | jq -e '.message == "Password updated successfully for user testuser."' >/dev/null; then
     echo "Password updated successfully."
     if [ "$ECHO_JSON" = true ]; then
       echo "Update Password Response JSON:"
@@ -102,7 +103,6 @@ update_password() {
     exit 1
   fi
 }
-
 
 ##############################################
 #
@@ -273,6 +273,8 @@ init_db() {
 check_health
 init_db
 create_account
+login
+update_password
 create_cat
 get_cat_by_id
 get_cat_by_name
@@ -282,8 +284,6 @@ get_affection_level
 get_cat_facts
 get_random_cat_image
 get_cat_lifespan
-update_password
-login
 
 echo "All API tests passed successfully!"
 

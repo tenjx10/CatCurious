@@ -112,15 +112,9 @@ def create_app(config_class=ProductionConfig):
 
 
     @app.route('/api/login', methods=['POST'])
-    def login() -> Response:
+    def login():
         """
-        
-        
-        
-        
-        
-        
-        Route to log in a user.
+        Route to log in a user and load their combatants.
 
         Expected JSON Input:
             - username (str): The username of the user.
@@ -128,7 +122,7 @@ def create_app(config_class=ProductionConfig):
 
         Returns:
             JSON response indicating the success of the login.
-        
+
         Raises:
             400 error if input validation fails.
             401 error if authentication fails (invalid username or password).
@@ -147,6 +141,10 @@ def create_app(config_class=ProductionConfig):
             if not Users.check_password(username, password):
                 app.logger.warning("Login failed for username: %s", username)
                 raise Unauthorized("Invalid username or password.")
+
+            app.logger.info("User %s logged in successfully.", username)
+            return jsonify({"message": f"User {username} logged in successfully."}), 200
+
         except Unauthorized as e:
             return jsonify({"error": str(e)}), 401
         except Exception as e:
@@ -156,19 +154,7 @@ def create_app(config_class=ProductionConfig):
     @app.route('/api/update-password', methods=['PUT'])
     def update_password() -> Response:
         """
-        Route to update the password of the user. 
-
-        Expected JSON Input:
-            - username (str): The user's username. 
-            - old_password (str): The user's current password. 
-            - new_password (str): The new password for the user.
-
-        Returns:
-            JSON response indicating the success of the password update.
-            Raises:
-                400 error if input validation fails.
-                401 error if old password is incorrect.
-                500 error if there is an issue with updating the password.
+        Route to update the user's password.
         """
         data = request.get_json()
         username = data.get('username')
@@ -176,22 +162,21 @@ def create_app(config_class=ProductionConfig):
         new_password = data.get('new_password')
 
         if not username or not old_password or not new_password:
-            raise BadRequest("Username, old_password, and new_password fields are all required.")
+            return make_response(jsonify({'error': 'All fields are required'}), 400)
 
         try:
             if not Users.check_password(username, old_password):
-                raise Unauthorized("Incorrect old password.")
+                return make_response(jsonify({'error': 'Incorrect old password'}), 401)
 
             Users.update_password(username, new_password)
-            app.logger.info("Password updated successfully for user %s.", username)
-            return jsonify({"message": f"Password updated successfully for user {username}."}), 200
+            return make_response(jsonify({
+                "message": f"Password updated successfully for user {username}."
+            }), 200)
 
-        except Unauthorized as e:
-            app.logger.warning("Password update failed for %s: %s", username, str(e))
-            return jsonify({"error": str(e)}), 401
         except Exception as e:
-            app.logger.error("Error while updating password: %s", str(e))
-            return jsonify({"error": "An unexpected error occured."}), 500
+            app.logger.error(f"Error updating password: {e}")
+            return make_response(jsonify({'error': 'An unexpected error occurred.'}), 500)
+
 
     ##########################################################
     #
