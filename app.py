@@ -182,45 +182,56 @@ def create_app(config_class=ProductionConfig):
     #
     ##########################################################
 
+
     @app.route('/api/create-cat', methods=['POST'])
-    def add_cat() -> Response:
+    def add_cat():
         """
-        Route to add a new cat to the database.
+        Add a new cat to the database.
 
         Expected JSON Input:
-            - name (str): The cat's name.
-            - breed (str): The cat's breed. 
-            - age (int): The cat's age. 
-            - weight (int): The cat's weight. 
+            - name (str): Cat's name.
+            - breed (str): Cat's breed.
+            - age (int): Cat's age.
+            - weight (float): Cat's weight.
 
         Returns:
-            JSON response indicating the success of the cat addition.
-        Raises:
-            400 error if input validation fails.
-            500 error if there is an issue adding the cat to the database.
+            JSON response with status and added cat details.
         """
-        app.logger.info('Adding a new cat to the database')
+        data = request.get_json()
+
         try:
-            data = request.get_json()
+            # Extract and validate input
+            name = data['name']
+            breed = data['breed']
+            age = data['age']
+            weight = data['weight']
 
-            name = data.get('name')
-            breed = data.get('breed')
-            age = data.get('age')
-            weight = data.get('weight')
+            if not name or not breed or age <= 0 or weight <= 0:
+                raise BadRequest("Invalid input. Ensure all fields are valid and positive.")
 
-            if not name or not breed or age is None or weight is None:
-                return make_response(jsonify({'error': 'Invalid input, all fields are required with valid values'}), 400)
+            # Add cat to the database
+            Cat.create_cat(name, breed, age, weight)
 
-            # Add the cat to the database
-            app.logger.info("Adding cat: %s (%s, Age: %d, Weight: %d)", name, breed, age, weight)
-            Cat.create_cat(name=name, breed=breed, age=age, weight=weight)
-            app.logger.info("Cat added to the database: %s", name)
-            return make_response(jsonify({'status': 'success', 'cat': name}), 201)
+            return jsonify({
+                'status': 'success',
+                'message': 'Cat added successfully.',
+                'cat': {
+                    'name': name,
+                    'breed': breed,
+                    'age': age,
+                    'weight': weight
+                }
+            }), 201
+
+        except BadRequest as e:
+            app.logger.error(f"BadRequest: {str(e)}")
+            return jsonify({'error': str(e)}), 400
+
         except Exception as e:
-            app.logger.error("Failed to add cat: %s", str(e))
-            return make_response(jsonify({'error': str(e)}), 500)
+            app.logger.error(f"Unexpected error: {str(e)}")
+            return jsonify({'error': 'An unexpected error occurred.'}), 500
 
-    @app.route('/api/clear-cats', methods=['DELETE'])
+            
     def clear_cats() -> Response:
         """
         Route to clear all cats from the database.

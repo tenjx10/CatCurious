@@ -112,16 +112,21 @@ update_password() {
 
 # Function to add a cat
 create_cat() {
-  echo "Adding a cat..."
-  curl -s -X POST "$BASE_URL/api/create-cat" -H "Content-Type: application/json" \
-    -d '{"name":"Whiskers", "breed":"Siamese", "age":3, "weight":8}' | grep -q '"status": "success"'
-  if [ $? -eq 0 ]; then
+  echo "Adding a new cat..."
+  response=$(curl -s -X POST "$BASE_URL/api/create-cat" -H "Content-Type: application/json" \
+    -d '{"name":"Whiskers", "breed":"Siamese", "age":3, "weight":8}')
+
+  if echo "$response" | jq -e '.status == "success"' >/dev/null; then
     echo "Cat added successfully."
   else
     echo "Failed to add cat."
+    echo "Response:"
+    echo "$response" | jq .
     exit 1
   fi
 }
+
+
 
 # Function to clear all cats
 clear_cats() {
