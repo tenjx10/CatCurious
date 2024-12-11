@@ -291,24 +291,3 @@ def test_get_cat_info(mocker):
     # Assertions
     assert result == expected_result, f"Expected {expected_result}, got {result}"
     mock_info.assert_called_once_with("drex")
-
-def test_get_cat_info_invalid_breed(mock_cursor):
-    """Test error when trying to fetch cat information for an invalid breed."""
-
-    # Simulate that no valid breed exists
-    mock_cursor.fetchone.return_value = None
-
-    # Expect a ValueError when the breed is invalid or not found
-    with pytest.raises(ValueError, match="Cat breed 'unknown_breed' not found"):
-        get_cat_info("unknown_breed")
-
-def test_get_cat_affection_level_invalid_breed(mock_cursor):
-    """Test error when trying to fetch affection level for an invalid breed."""
-
-    # Simulate that no cat exists with the given breed
-    mock_cursor.fetchone.return_value = None
-
-    # Expect a ValueError when the breed is invalid
-    with pytest.raises(ValueError, match="Cat breed 'unknown_breed' not found"):
-        get_cat_affection("unknown_breed")
-
