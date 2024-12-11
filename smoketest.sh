@@ -110,80 +110,58 @@ update_password() {
 #
 ##############################################
 
-# Function to add a cat
 create_cat() {
   echo "Adding a new cat..."
-  response=$(curl -s -X POST "$BASE_URL/api/create-cat" -H "Content-Type: application/json" \
-    -d '{"name":"Whiskers", "breed":"Siamese", "age":3, "weight":8}')
+  response=$(curl -s -X POST "$BASE_URL/create-cat" -H "Content-Type: application/json" \
+    -d '{"name":"Whiskers", "breed":"chau", "age":3, "weight":8}')
 
-  if echo "$response" | jq -e '.status == "success"' >/dev/null; then
+  if echo "$response" | grep -q '"status": "success"'; then
     echo "Cat added successfully."
   else
     echo "Failed to add cat."
-    echo "Response:"
-    echo "$response" | jq .
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Response:" 
+      echo "$response" | jq .
+    fi
     exit 1
   fi
 }
 
-
-
-# Function to clear all cats
-clear_cats() {
-  echo "Clearing cats..."
-  response=$(curl -s -X DELETE "$BASE_URL/api/clear-cats")
-  if echo "$response" | grep -q '"status": "success"'; then
-    echo "Cats cleared successfully."
-  else
-    echo "Failed to clear cats."
-    exit 1
-  fi
-}
-
-# Function to delete a cat by ID (1)
-delete_cat_by_id() {
-  echo "Deleting cat by ID (1)..."
-  response=$(curl -s -X DELETE "$BASE_URL/api/delete-cat/1")
-  if echo "$response" | grep -q '"status": "success"'; then
-    echo "Cat deleted successfully by ID (1)."
-  else
-    echo "Failed to delete cat by ID (1)."
-    exit 1
-  fi
-}
-
-# Function to get a cat by ID (1)
 get_cat_by_id() {
-  echo "Getting cat by ID (1)..."
+  echo "Retrieving cat by ID..."
   response=$(curl -s -X GET "$BASE_URL/get-cat-by-id/1")
+
   if echo "$response" | grep -q '"status": "success"'; then
-    echo "Cat retrieved successfully by ID (1)."
+    echo "Cat retrieved successfully."
     if [ "$ECHO_JSON" = true ]; then
-      echo "Cat JSON (ID 1):"
+      echo "Response:" 
       echo "$response" | jq .
     fi
   else
-    echo "Failed to get cat by ID (1)."
+    echo "Failed to retrieve cat."
+    if [ "$ECHO_JSON" = true ]; then
+      echo "Response:" 
+      echo "$response" | jq .
+    fi
     exit 1
   fi
 }
 
-# Function to get a cat by name
-get_cat_by_name() {
-  echo "Getting cat by name (Fluffy)..."
-  response=$(curl -s -X GET "$BASE_URL/get-cat-by-name/Fluffy")
+delete_cat_by_id() {
+  echo "Deleting cat by ID..."
+  response=$(curl -s -X DELETE "$BASE_URL/delete-cat/1")
+
   if echo "$response" | grep -q '"status": "success"'; then
-    echo "Cat retrieved successfully by name (Fluffy)."
+    echo "Cat deleted successfully."
+  else
+    echo "Failed to delete cat."
     if [ "$ECHO_JSON" = true ]; then
-      echo "Cat JSON (Fluffy):"
+      echo "Response:" 
       echo "$response" | jq .
     fi
-  else
-    echo "Failed to get meal by name (Spaghetti)."
     exit 1
   fi
 }
-
 ####################################################
 #
 # Cat Information
@@ -276,19 +254,17 @@ init_db() {
 
 # Run all the steps in order
 check_health
-init_db
 create_account
 login
 update_password
 create_cat
 get_cat_by_id
-get_cat_by_name
 delete_cat_by_id
-clear_cats
 get_affection_level
 get_cat_facts
 get_random_cat_image
 get_cat_lifespan
+clear_cats
 
 echo "All API tests passed successfully!"
 

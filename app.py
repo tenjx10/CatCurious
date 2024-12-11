@@ -11,13 +11,11 @@ from cat_curious.utils.sql_utils import check_database_connection, check_table_e
 from cat_curious.utils.cat_affection_utils import get_affection_level
 from cat_curious.utils.cat_facts_utils import get_random_cat_facts
 from cat_curious.utils.cat_info_utils import cat_info
+from sqlalchemy.exc import IntegrityError
 
 
 # Load environment variables from .env file
 load_dotenv()
-
-app = Flask(__name__)
-db = SQLAlchemy()
 
 def create_app(config_class=ProductionConfig):
     app = Flask(__name__)
@@ -184,7 +182,7 @@ def create_app(config_class=ProductionConfig):
 
 
     @app.route('/api/create-cat', methods=['POST'])
-    def add_cat():
+    def create_cat():
         """
         Add a new cat to the database.
 
@@ -198,138 +196,47 @@ def create_app(config_class=ProductionConfig):
             JSON response with status and added cat details.
         """
         data = request.get_json()
-
         try:
-            # Extract and validate input
             name = data['name']
             breed = data['breed']
             age = data['age']
             weight = data['weight']
 
             if not name or not breed or age <= 0 or weight <= 0:
-                raise BadRequest("Invalid input. Ensure all fields are valid and positive.")
+                return jsonify({'error': 'Invalid input. Ensure all fields are valid and positive.'}), 400
 
-            # Add cat to the database
             Cat.create_cat(name, breed, age, weight)
-
-            return jsonify({
-                'status': 'success',
-                'message': 'Cat added successfully.',
-                'cat': {
-                    'name': name,
-                    'breed': breed,
-                    'age': age,
-                    'weight': weight
-                }
-            }), 201
-
-        except BadRequest as e:
-            app.logger.error(f"BadRequest: {str(e)}")
-            return jsonify({'error': str(e)}), 400
-
+            return jsonify({'status': 'success', 'message': 'Cat added successfully.'}), 201
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({'error': f"Cat with name '{name}' already exists."}), 409
         except Exception as e:
-            app.logger.error(f"Unexpected error: {str(e)}")
-            return jsonify({'error': 'An unexpected error occurred.'}), 500
-
-            
-    def clear_cats() -> Response:
-        """
-        Route to clear all cats from the database.
-
-        Returns:
-            JSON response indicating success of the operation or error message.
-        """
-        try:
-            app.logger.info("Clearing all cats from the database")
-            Cat.clear_cats()
-            return make_response(jsonify({'status': 'success'}), 200)
-        except Exception as e:
-            app.logger.error(f"Error clearing catalog: {e}")
-            return make_response(jsonify({'error': str(e)}), 500)
+            app.logger.error(f"Error creating cat: {e}")
+            return jsonify({'error': str(e)}), 500
 
     @app.route('/api/delete-cat/<int:cat_id>', methods=['DELETE'])
-    def delete_cat(cat_id: int) -> Response:
-        """
-        Route to delete a cat by its ID (soft delete).
-
-        Path Parameter:
-            - cat_id (int): The ID of the cat to delete.
-
-        Returns:
-            JSON response indicating success of the operation or error message.
-        """
+    def delete_cat(cat_id):
+        """Delete a cat by its ID."""
         try:
-            app.logger.info(f"Deleting cat by ID: {cat_id}")
             Cat.delete_cat(cat_id)
-            return make_response(jsonify({'status': 'success'}), 200)
+            return jsonify({'status': 'success', 'message': f'Cat with ID {cat_id} deleted successfully.'}), 200
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 404
         except Exception as e:
-            app.logger.error(f"Error deleting song: {e}")
-            return make_response(jsonify({'error': str(e)}), 500)
+            app.logger.error(f"Error deleting cat: {e}")
+            return jsonify({'error': str(e)}), 500
 
     @app.route('/api/get-cat-by-id/<int:cat_id>', methods=['GET'])
-    def get_cat_by_id(cat_id: int) -> Response:
-        """
-        Route to retrieve a cat by its ID.
-
-        Path Parameter:
-            - cat_id (int): The ID of the cat.
-
-        Returns:
-            JSON response with the cat details or error message.
-        """
+    def get_cat_by_id(cat_id):
+        """Retrieve a cat by its unique ID."""
         try:
-            app.logger.info(f"Retrieving cat by ID: {cat_id}")
             cat = Cat.get_cat_by_id(cat_id)
-            return make_response(jsonify({'status': 'success', 'cat': cat}), 200)
+            return jsonify({'status': 'success', 'cat': cat.to_dict()}), 200
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 404
         except Exception as e:
-            app.logger.error(f"Error retrieving cat by ID: {e}")
-            return make_response(jsonify({'error': str(e)}), 500)
-
-    @app.route('/api/get-cat-by-name/<string:cat_name>', methods=['GET'])
-    def get_cat_by_name(cat_name: str) -> Response:
-        """
-        Route to retrieve a cat by its name.
-
-        Path Parameter:
-            - cat_name (str): The name of the cat.
-
-        Returns:
-            JSON response with the cat details or error message.
-        """
-        try:
-            app.logger.info(f"Retrieving cat by name: {cat_name}")
-            cat = Cat.get_cat_by_name(cat_name)
-            return make_response(jsonify({'status': 'success', 'cat': cat}), 200)
-        except Exception as e:
-            app.logger.error(f"Error retrieving cat by name: {e}")
-            return make_response(jsonify({'error': str(e)}), 500)
-    
-    @app.route('/api/init-db', methods=['POST'])
-    def init_db():
-        """
-        Initialize or recreate database tables.
-
-        This route initializes the database tables defined in the SQLAlchemy models.
-        If the tables already exist, they are dropped and recreated to ensure a clean
-        slate. Use this with caution as all existing data will be deleted.
-
-        Returns:
-            Response: A JSON response indicating the success or failure of the operation.
-
-        Logs:
-            Logs the status of the database initialization process.
-        """
-        try:
-            with app.app_context():
-                app.logger.info("Dropping all existing tables.")
-                db.drop_all()  # Drop all existing tables
-                app.logger.info("Creating all tables from models.")
-                db.create_all()  # Recreate all tables
-            app.logger.info("Database initialized successfully.")
-            return jsonify({"status": "success", "message": "Database initialized successfully."}), 200
-        except Exception as e:
-            app.logger.error("Failed to initialize database: %s", str(e))
-            return jsonify({"status": "error", "message": "Failed to initialize database."}), 500
+            app.logger.error(f"Error retrieving cat: {e}")
+            return jsonify({'error': str(e)}), 500
 
     ####################################################
     #
