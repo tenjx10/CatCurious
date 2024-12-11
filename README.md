@@ -1,3 +1,6 @@
+#Notes: There is a piture of our unit test and smoke tests in grading folder
+and a seperate unit test branch for running unit tests
+
 # CatCurious API Documentation
 
 ## Overview
