@@ -24,7 +24,15 @@ class Cat(db.Model):
     breed = db.Column(db.String(80), nullable=False)
     age = db.Column(db.Integer, nullable=False)
     weight = db.Column(db.Integer, nullable=False)
+    
+    def to_dict(self) -> dict:
+        """
+        Converts the Cat instance into a dictionary.
 
+        Returns:
+            dict: A dictionary representation of the Cat instance.
+        """
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
     @classmethod
     def create_cat(cls, name: str, breed: str, age: int, weight: int) -> None:
