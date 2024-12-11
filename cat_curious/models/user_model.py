@@ -4,6 +4,7 @@ import logging
 import os
 import sqlite3
 
+from cat_curious.db import db
 from cat_curious.utils.logger import configure_logger
 from cat_curious.utils.sql_utils import get_db_connection
 
@@ -11,15 +12,16 @@ from cat_curious.utils.sql_utils import get_db_connection
 logger = logging.getLogger(__name__)
 configure_logger(logger)
 
-@dataclass
-class Users:
-    id: int
-    username: str
-    salt: str
-    password: str
+class Users(db.Model):
+    __tablename__ = 'users'
 
-    def __post_init__(self):
-        logger.info(f"User {self.username} initialized with a hashed password.")
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(64), nullable=False)  
+    salt = db.Column(db.String(32), nullable=False)  
+
+    def get_id(self):
+        return str(self.id)
 
     @classmethod
     def generate_hashed_password(cls, password: str) -> tuple[str, str]:

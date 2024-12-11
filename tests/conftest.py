@@ -1,6 +1,6 @@
 import pytest
 
-from ugh import create_app
+from app import create_app
 from config import TestConfig
 from cat_curious.db import db
 
