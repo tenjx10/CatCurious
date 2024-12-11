@@ -27,8 +27,6 @@ def create_app(config_class=ProductionConfig):
     with app.app_context():
         db.create_all()  # Recreate all tables
 
-    cat_model = Cat(id=-1, name="Whiskers", breed="beng", age=3, weight=8)
-
     ####################################################
     #
     # Healthchecks
@@ -215,7 +213,7 @@ def create_app(config_class=ProductionConfig):
 
             # Add the cat to the database
             app.logger.info("Adding cat: %s (%s, Age: %d, Weight: %d)", name, breed, age, weight)
-            cat_model.create_cat(name=name, breed=breed, age=age, weight=weight)
+            Cat.create_cat(name=name, breed=breed, age=age, weight=weight)
             app.logger.info("Cat added to the database: %s", name)
             return make_response(jsonify({'status': 'success', 'cat': name}), 201)
         except Exception as e:
@@ -232,7 +230,7 @@ def create_app(config_class=ProductionConfig):
         """
         try:
             app.logger.info("Clearing all cats from the database")
-            cat_model.clear_cats()
+            Cat.clear_cats()
             return make_response(jsonify({'status': 'success'}), 200)
         except Exception as e:
             app.logger.error(f"Error clearing catalog: {e}")
@@ -251,7 +249,7 @@ def create_app(config_class=ProductionConfig):
         """
         try:
             app.logger.info(f"Deleting cat by ID: {cat_id}")
-            cat_model.delete_cat(cat_id)
+            Cat.delete_cat(cat_id)
             return make_response(jsonify({'status': 'success'}), 200)
         except Exception as e:
             app.logger.error(f"Error deleting song: {e}")
@@ -270,7 +268,7 @@ def create_app(config_class=ProductionConfig):
         """
         try:
             app.logger.info(f"Retrieving cat by ID: {cat_id}")
-            cat = cat_model.get_cat_by_id(cat_id)
+            cat = Cat.get_cat_by_id(cat_id)
             return make_response(jsonify({'status': 'success', 'cat': cat}), 200)
         except Exception as e:
             app.logger.error(f"Error retrieving cat by ID: {e}")
@@ -289,7 +287,7 @@ def create_app(config_class=ProductionConfig):
         """
         try:
             app.logger.info(f"Retrieving cat by name: {cat_name}")
-            cat = cat_model.get_cat_by_name(cat_name)
+            cat = Cat.get_cat_by_name(cat_name)
             return make_response(jsonify({'status': 'success', 'cat': cat}), 200)
         except Exception as e:
             app.logger.error(f"Error retrieving cat by name: {e}")
