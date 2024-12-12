@@ -1,12 +1,14 @@
 import logging
 import requests
 import os
+from dotenv import load_dotenv
 
 
 from cat_curious.utils.logger import configure_logger
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
+load_dotenv()
 
 def get_affection_level(breed: str) -> int:
     """
@@ -21,6 +23,7 @@ def get_affection_level(breed: str) -> int:
     Raises:
         RuntimeError: If no breed information is returned by the API or if there is an error in the request.
     """
+    API_KEY = os.getenv("KEY")
     url = f"https://api.thecatapi.com/v1/images/search?limit=1&breed_ids={breed}&api_key={os.getenv('KEY')}"
     try:
         logger.info("Fetching breed information from %s", url)

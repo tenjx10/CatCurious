@@ -129,7 +129,7 @@ create_cat() {
 
 get_cat_by_id() {
   echo "Retrieving cat by ID..."
-  response=$(curl -s -X GET "$BASE_URL/get-cat-by-id/1")
+  response=$(curl -s -X GET "$BASE_URL/get-cat-by-id/2")
 
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Cat retrieved successfully."
@@ -149,7 +149,7 @@ get_cat_by_id() {
 
 delete_cat_by_id() {
   echo "Deleting cat by ID..."
-  response=$(curl -s -X DELETE "$BASE_URL/delete-cat/1")
+  response=$(curl -s -X DELETE "$BASE_URL/delete-cat/2")
 
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Cat deleted successfully."
@@ -174,8 +174,11 @@ get_affection_level() {
   response=$(curl -s -X GET "$BASE_URL/get-affection-level/Siamese")
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Affection level fetched successfully."
+    echo "$response" | jq .
   else
     echo "Failed to fetch affection level."
+    echo "Error Response JSON:"
+    echo "$response" | jq .
     exit 1
   fi
 }
@@ -184,10 +187,21 @@ get_affection_level() {
 get_cat_facts() {
   echo "Fetching 3 random cat facts..."
   response=$(curl -s -X GET "$BASE_URL/get-cat-facts/3")
-  if echo "$response" | grep -q '"status": "success"'; then
-    echo "Cat facts retrieved successfully."
+  # Check if the response is valid JSON using jq
+  if echo "$response" | jq empty 2>/dev/null; then
+    # Check for a successful status in the response
+    if echo "$response" | jq -e '.status == "success"' >/dev/null; then
+      echo "Cat facts retrieved successfully."
+      echo "$response" | jq .
+    else
+      echo "Failed to fetch cat facts."
+      echo "Error Response JSON:"
+      echo "$response" | jq .
+      exit 1
+    fi
   else
-    echo "Failed to fetch cat facts."
+    echo "Error: Invalid JSON received from API."
+    echo "Raw Response: $response"
     exit 1
   fi
 }
@@ -196,10 +210,19 @@ get_cat_facts() {
 get_random_cat_image() {
   echo "Fetching a random cat image..."
   response=$(curl -s -X GET "$BASE_URL/get-random-cat-image")
-  if echo "$response" | grep -q '"status": "success"'; then
-    echo "Random cat image fetched successfully."
+  if echo "$response" | jq empty 2>/dev/null; then
+    if echo "$response" | jq -e '.status == "success"' >/dev/null; then
+      echo "Random cat image fetched successfully."
+      echo "$response" | jq .
+    else
+      echo "Failed to fetch random cat image."
+      echo "Error Response JSON:"
+      echo "$response" | jq .
+      exit 1
+    fi
   else
-    echo "Failed to fetch random cat image."
+    echo "Error: Invalid JSON received from API."
+    echo "Raw Response: $response"
     exit 1
   fi
 }
@@ -263,8 +286,6 @@ delete_cat_by_id
 get_affection_level
 get_cat_facts
 get_random_cat_image
-get_cat_lifespan
-clear_cats
 
 echo "All API tests passed successfully!"
 

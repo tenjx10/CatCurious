@@ -28,12 +28,14 @@ def get_random_cat_image() -> str:
         response.raise_for_status()
 
         data = response.json()
-        if data and "url" in data[0]:
+        if isinstance(data, list) and len(data) > 0 and "url" in data[0]:
             cat_image_url = data[0]["url"]
             logger.info("Fetched random cat image URL: %s", cat_image_url)
             return cat_image_url
-        else:
-            raise RuntimeError("No cat image URL received from API.")
+        
+        # Raise an error if the response is not structured as expected
+        logger.error("Invalid response from API: %s", data)
+        raise RuntimeError("No valid cat image URL received from API.")
 
     except requests.exceptions.Timeout:
         logger.error("Request to TheCatAPI timed out.")

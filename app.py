@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 from flask import Flask, jsonify, make_response, Response, request
 from werkzeug.exceptions import BadRequest, Unauthorized
+import requests 
+import os
 
 from config import ProductionConfig
 from cat_curious.db import *
@@ -10,12 +12,15 @@ from cat_curious.models.cat_model import Cat
 from cat_curious.utils.sql_utils import check_database_connection, check_table_exists
 from cat_curious.utils.cat_affection_utils import get_affection_level
 from cat_curious.utils.cat_facts_utils import get_random_cat_facts
+from cat_curious.utils.cat_random_image_utils import get_random_cat_image
 from cat_curious.utils.cat_info_utils import cat_info
+from cat_curious.utils.cat_lifespan_utils import get_cat_lifespan
 from sqlalchemy.exc import IntegrityError
 
 
 # Load environment variables from .env file
 load_dotenv()
+API_KEY = os.getenv("KEY")
 
 def create_app(config_class=ProductionConfig):
     app = Flask(__name__)
@@ -257,28 +262,37 @@ def create_app(config_class=ProductionConfig):
         """
         try:
             app.logger.info(f"Fetching affection level for breed: {breed}")
-            url = f"https://api.thecatapi.com/v1/images/search?limit=1&breed_ids={breed}&api_key={KEY}"
-            response = request.get(url, timeout=5)
+            url = f"https://api.thecatapi.com/v1/breeds/search?q={breed}&api_key={API_KEY}"
+            response = requests.get(url, timeout=5)
             response.raise_for_status()
             data = response.json()
 
-            if data and "breeds" in data[0]:
-                affection_level = data[0]["breeds"][0]["affection_level"]
-                app.logger.info(f"Received affection level: {affection_level}")
-                return make_response(jsonify({'status': 'success', 'breed': breed, 'affection_level': affection_level}), 200)
+            if data:
+                affection_level = data[0].get("affection_level")
+                if affection_level is not None:
+                    app.logger.info(f"Received affection level: {affection_level}")
+                    return make_response(jsonify({
+                        'status': 'success', 
+                        'breed': breed, 
+                        'affection_level': affection_level
+                    }), 200)
+                else:
+                    app.logger.error("Affection level not found.")
+                    return make_response(jsonify({'error': 'Affection level not found.'}), 404)
             else:
                 app.logger.error("No breed information received from API.")
                 return make_response(jsonify({'error': 'No breed information received from API.'}), 500)
 
-        except request.exceptions.Timeout:
+        except requests.exceptions.Timeout:
             app.logger.error("Request to TheCatAPI timed out.")
             return make_response(jsonify({'error': 'Request to TheCatAPI timed out.'}), 504)
-        except request.exceptions.RequestException as e:
+        except requests.exceptions.RequestException as e:
             app.logger.error(f"Request to TheCatAPI failed: {e}")
             return make_response(jsonify({'error': f'Request failed: {e}'}), 502)
         except Exception as e:
             app.logger.error(f"Error retrieving affection level of cat: {e}")
             return make_response(jsonify({'error': str(e)}), 500)
+
 
     @app.route('/api/get-cat-facts/<int:num_facts>', methods=['GET'])
     def get_cat_facts(num_facts: int) -> Response:
@@ -298,7 +312,7 @@ def create_app(config_class=ProductionConfig):
         url = f"https://catfact.ninja/facts?limit={num_facts}"
         try:
             app.logger.info("Fetching %d random cat facts from %s", num_facts, url)
-            response = request.get(url, timeout=5)
+            response = requests.get(url, timeout=5)
             response.raise_for_status()
             data = response.json()
 
@@ -310,12 +324,16 @@ def create_app(config_class=ProductionConfig):
 
             app.logger.info("Fetched %d cat facts.", len(facts))
             return make_response(jsonify({'status': 'success', 'facts': facts}), 200)
+        
+        except ValueError as ve:
+            app.logger.error("Invalid request to Cat Facts API: %s", ve)
+            return make_response(jsonify({'error': str(ve)}), 400)
 
-        except request.exceptions.Timeout:
+        except requests.exceptions.Timeout:
             app.logger.error("Request to Cat Facts API timed out.")
             return make_response(jsonify({'error': 'Request to Cat Facts API timed out.'}), 504)
 
-        except request.exceptions.RequestException as e:
+        except requests.exceptions.RequestException as e:
             app.logger.error("Request to Cat Facts API failed: %s", e)
             return make_response(jsonify({'error': f'Request to Cat Facts API failed: {e}'}), 502)
 
@@ -334,7 +352,7 @@ def create_app(config_class=ProductionConfig):
         Returns:
             JSON response with the URL of cat picture or error message.
         """
-        url = f"https://api.thecatapi.com/v1/images/search?limit=1&breed_ids={breed}&api_key={KEY}"
+        url = f"https://api.thecatapi.com/v1/images/search?limit=1&breed_ids={breed}&api_key={API_KEY}"
         try:
             app.logger.info(f"Fetching cat picture for breed: {breed} from {url}")
             response = request.get(url, timeout=5)
@@ -365,72 +383,51 @@ def create_app(config_class=ProductionConfig):
     def get_cat_lifespan(breed: str) -> Response:
         """
         Route to fetch the lifespan of a cat breed using TheCatAPI.
-
-        Path Parameter:
-            - breed (str): The cat breed to get lifespan for.
-
-        Returns:
-            JSON response indicating the lifespan or error message.
         """
         try:
-            app.logger.info(f"Fetching lifespan for breed: {breed}")
-            url = f"https://api.thecatapi.com/v1/breeds?breed_ids={breed}&api_key={KEY}"
-            response = request.get(url, timeout=5)
-            response.raise_for_status()
-            data = response.json()
+            lifespan, api_data = get_cat_lifespan(breed)
+            
+            app.logger.info("Successfully retrieved lifespan for breed '%s': %s years", breed, lifespan)
+            app.logger.info("Full API Response: %s", api_data)
 
-            if data:
-                lifespan = data[0].get("life_span")
-                app.logger.info(f"Received lifespan: {lifespan}")
-                return make_response(jsonify({'status': 'success', 'breed': breed, 'lifespan': lifespan}), 200)
-            else:
-                app.logger.error("No breed information received from API.")
-                return make_response(jsonify({'error': 'No breed information received from API.'}), 500)
+            # Return success response
+            return jsonify({
+                'status': 'success',
+                'breed': breed,
+                'lifespan': lifespan,
+                'api_data': api_data
+            }), 200
 
-        except request.exceptions.Timeout:
-            app.logger.error("Request to TheCatAPI timed out.")
-            return make_response(jsonify({'error': 'Request to TheCatAPI timed out.'}), 504)
-        except request.exceptions.RequestException as e:
-            app.logger.error(f"Request to TheCatAPI failed: {e}")
-            return make_response(jsonify({'error': f'Request failed: {e}'}), 502)
+        except RuntimeError as re:
+            app.logger.error("RuntimeError fetching cat lifespan for breed '%s': %s", breed, re)
+            return jsonify({'error': str(re)}), 502
+
         except Exception as e:
-            app.logger.error(f"Error retrieving lifespan for breed {breed}: {e}")
-            return make_response(jsonify({'error': str(e)}), 500)
+            app.logger.error("Unexpected error fetching cat lifespan for breed '%s': %s", breed, e, exc_info=True)
+            return jsonify({'error': f'Unexpected error: {e}'}), 500
+
 
     @app.route('/api/get-random-cat-image', methods=['GET'])
-    def get_random_cat_image() -> Response:
+    def get_random_cat_imagee() -> Response:
         """
         Route to fetch a random cat image from TheCatAPI.
-
-        Returns:
-            JSON response with the URL of the random cat image or an error message.
         """
-        url = "https://api.thecatapi.com/v1/images/search?limit=1&api_key={KEY}"
         try:
-            app.logger.info(f"Fetching random cat image from {url}")
-            response = request.get(url, timeout=5)
-            response.raise_for_status()
+            cat_image_url = get_random_cat_image()  # Ensure this returns a plain string
 
-            data = response.json()
-            if data and "url" in data[0]:
-                cat_image_url = data[0]["url"]
-                app.logger.info(f"Fetched random cat image URL: {cat_image_url}")
-                return make_response(jsonify({'status': 'success', 'cat_image_url': cat_image_url}), 200)
-            else:
-                app.logger.error("Data received from TheCatAPI not received.")
-                return make_response(jsonify({'error': 'Data received from TheCatAPI not received.'}), 500)
+            return jsonify({
+                'status': 'success',
+                'cat_image_url': cat_image_url
+            })
 
-        except request.exceptions.Timeout:
-            app.logger.error("Request to TheCatAPI timed out.")
-            return make_response(jsonify({'error': 'Request to TheCatAPI timed out.'}), 504)
-
-        except request.exceptions.RequestException as e:
-            app.logger.error(f"Request to TheCatAPI failed: {e}")
-            return make_response(jsonify({'error': f'Request to TheCatAPI failed: {e}'}), 502)
+        except RuntimeError as re:
+            app.logger.error("RuntimeError fetching random cat image: %s", re)
+            return jsonify({'error': str(re)}), 502
 
         except Exception as e:
-            app.logger.error(f"Error retrieving random cat image: {e}")
-            return make_response(jsonify({'error': str(e)}), 500)
+            app.logger.error("Unexpected error fetching random cat image: %s", e, exc_info=True)
+            return jsonify({'error': f'Unexpected error: {e}'}), 500
+
 
     return app
 

@@ -4,7 +4,7 @@ and a seperate unit test branch for running unit tests
 # CatCurious API Documentation
 
 ## Overview
-The CatCurious API allows users to interact with a database of cats and fetch various details about cat breeds using external APIs. Users can add, delete, or retrieve cats from the database and fetch additional information like cat pictures, lifespan, and random cat facts. The API is designed to provide information for cat enthusiasts and to offer basic cat-related functionality.
+The CatCurious API allows users to interact with a database of cats and fetch various details about cat breeds using external APIs. Users can add, delete, or retrieve cats from the database and fetch additional information like cat pictures, lifespan, and random cat facts. The API is designed to provide information for cat enthusiasts and to offer basic cat-related functionality. 
 
 ## ROUTES:
 
