@@ -1,2 +1,2 @@
 Please see unit tests branch for running unit tests. 
-we used catAPI 
+we used The Cat API and Cat Facts API 
