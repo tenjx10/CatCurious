@@ -129,7 +129,7 @@ create_cat() {
 
 get_cat_by_id() {
   echo "Retrieving cat by ID..."
-  response=$(curl -s -X GET "$BASE_URL/get-cat-by-id/2")
+  response=$(curl -s -X GET "$BASE_URL/get-cat-by-id/3")
 
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Cat retrieved successfully."
@@ -149,7 +149,7 @@ get_cat_by_id() {
 
 delete_cat_by_id() {
   echo "Deleting cat by ID..."
-  response=$(curl -s -X DELETE "$BASE_URL/delete-cat/2")
+  response=$(curl -s -X DELETE "$BASE_URL/delete-cat/3")
 
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Cat deleted successfully."

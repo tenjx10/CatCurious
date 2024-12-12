@@ -1,10 +1,14 @@
-#Notes: There is a piture of our unit test and smoke tests in grading folder
-and a seperate unit test branch for running unit tests
+#Notes: There is a piture of our passing unit test and smoke tests in grading folder on the main branch
+and a seperate unit test branch for running unit tests. 
+#Disclosure: Irene emailed Professor Golbus and he agreed to an extension based on circumstances she shared. 
 
 # CatCurious API Documentation
 
 ## Overview
 The CatCurious API allows users to interact with a database of cats and fetch various details about cat breeds using external APIs. Users can add, delete, or retrieve cats from the database and fetch additional information like cat pictures, lifespan, and random cat facts. The API is designed to provide information for cat enthusiasts and to offer basic cat-related functionality. 
+
+## Set Up
+To run this application, please generate a key from The Cat API. We also used the Cat Fact API, which does not require a key. Please set up and activate a virtual environment using setup_venv.sh and run the docker script run_docker.sh. To run the unit tests specifically, please run via the unit test branch, not the main branch. Once again, to view pictures of our passing smoke and unit tests, please see the grading folder on the main branch. 
 
 ## ROUTES:
 
